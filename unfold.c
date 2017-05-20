@@ -1,6 +1,6 @@
 /*
  * unfold.c
- * Copyright (C) 2016-2017 Alexei Frolov
+ * Copyright (C) 2017 Alexei Frolov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define PROGRAM_NAME "unfold"
+#define PROGRAM_NAME    "unfold"
+#define PROGRAM_VERSION "0.2.0"
 
 #define BUFFER_SIZE 4096
 
@@ -71,9 +72,24 @@ static FILE *open_file(const char *path)
 	return f;
 }
 
-static void usage(FILE *f, const char *name)
+static void help(FILE *f, const char *name)
 {
-	fprintf(f, "usage: %s [FILE...]\n", name);
+	fprintf(f, "usage: %s [OPTION]... [FILE]...\n", name);
+	fprintf(f, "Join input lines and print to standard output\n\n");
+	fprintf(f, "    -d, --delimiter=DELIM\n\n");
+	fprintf(f, "        use DELIM instead of space to replace newlines\n");
+	fprintf(f, "    -h, --help\n");
+	fprintf(f, "        display this help text and exit\n");
+	fprintf(f, "    -v, --version\n");
+	fprintf(f, "        display version information and exit\n");
+}
+
+static void version(FILE *f, const char *name)
+{
+	fprintf(f, "%s %s\n", name, PROGRAM_VERSION);
+	fprintf(f, "Copyright (C) 2017 Alexei Frolov\n");
+	fprintf(f, "This program is distributed as free software under the\n");
+	fprintf(f, "terms of the GNU General Public License, version 3.\n");
 }
 
 int main(int argc, char **argv)
@@ -96,8 +112,15 @@ int main(int argc, char **argv)
 		case 'd':
 			delim = optarg[0];
 			break;
+		case 'h':
+			help(stdout, PROGRAM_NAME);
+			exit(0);
+		case 'v':
+			version(stdout, PROGRAM_NAME);
+			exit(0);
 		case '?':
-			usage(stderr, argv[0]);
+		default:
+			help(stderr, argv[0]);
 			exit(1);
 		}
 	}
