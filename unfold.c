@@ -80,6 +80,8 @@ static void help(FILE *f, const char *name)
 	fprintf(f, "        use DELIM instead of space to replace newlines\n");
 	fprintf(f, "    -h, --help\n");
 	fprintf(f, "        display this help text and exit\n");
+	fprintf(f, "    -n, --no-newline\n");
+	fprintf(f, "        do not output a trailing newline\n");
 	fprintf(f, "    -v, --version\n");
 	fprintf(f, "        display version information and exit\n");
 }
@@ -94,20 +96,22 @@ static void version(FILE *f, const char *name)
 
 int main(int argc, char **argv)
 {
-	int c, delim, status;
+	int c, delim, newline, status;
 	FILE *f;
 
 	static struct option long_opts[] = {
 		{ "delimiter", required_argument, 0, 'd' },
 		{ "help", no_argument, 0, 'h' },
+		{ "no-newline", no_argument, 0, 'n' },
 		{ "version", no_argument, 0, 'v' },
 		{ 0, 0, 0, 0 }
 	};
 
 	delim = ' ';
+	newline = 1;
 	status = EXIT_SUCCESS;
 
-	while ((c = getopt_long(argc, argv, "d:hv", long_opts, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "d:hnv", long_opts, NULL)) != EOF) {
 		switch (c) {
 		case 'd':
 			delim = optarg[0];
@@ -115,6 +119,9 @@ int main(int argc, char **argv)
 		case 'h':
 			help(stdout, PROGRAM_NAME);
 			exit(0);
+		case 'n':
+			newline = 0;
+			break;
 		case 'v':
 			version(stdout, PROGRAM_NAME);
 			exit(0);
@@ -135,7 +142,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (unfolded)
+	if (unfolded && newline)
 		putchar('\n');
 
 	return status;
