@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #define PROGRAM_NAME "unfold"
@@ -27,12 +28,14 @@
 #define BUFFER_SIZE 4096
 
 static int print = 0;
+static int unfolded = 0;
 
 static void unfold(FILE *f, int delim)
 {
 	char buf[BUFFER_SIZE];
 	char *s;
 
+	unfolded = 1;
 	while (fgets(buf, BUFFER_SIZE, f)) {
 		if (print) {
 			putchar(delim);
@@ -47,6 +50,27 @@ static void unfold(FILE *f, int delim)
 	}
 }
 
+static FILE *open_file(const char *path)
+{
+	struct stat sb;
+	FILE *f;
+
+	if (stat(path, &sb) != 0) {
+		perror(path);
+		return NULL;
+	}
+	if (!S_ISREG(sb.st_mode)) {
+		fprintf(stderr, "%s: not a regular file\n", path);
+		return NULL;
+	}
+	if (!(f = fopen(path, "r"))) {
+		perror(path);
+		return NULL;
+	}
+
+	return f;
+}
+
 static void usage(FILE *f, const char *name)
 {
 	fprintf(f, "usage: %s [FILE...]\n", name);
@@ -54,7 +78,8 @@ static void usage(FILE *f, const char *name)
 
 int main(int argc, char **argv)
 {
-	int c, delim;
+	int c, delim, status;
+	FILE *f;
 
 	static struct option long_opts[] = {
 		{ "delimiter", required_argument, 0, 'd' },
@@ -64,8 +89,9 @@ int main(int argc, char **argv)
 	};
 
 	delim = ' ';
+	status = EXIT_SUCCESS;
 
-	while ((c = getopt_long(argc, argv, "d:cv", long_opts, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "d:hv", long_opts, NULL)) != EOF) {
 		switch (c) {
 		case 'd':
 			delim = optarg[0];
@@ -76,9 +102,18 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (optind == argc)
+	if (optind == argc) {
 		unfold(stdin, delim);
+	} else {
+		for (; optind < argc; ++optind) {
+			if (!(f = open_file(argv[optind])))
+				continue;
+			unfold(f, delim);
+		}
+	}
 
-	putchar('\n');
-	return 0;
+	if (unfolded)
+		putchar('\n');
+
+	return status;
 }
