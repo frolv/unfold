@@ -82,6 +82,8 @@ static void help(FILE *f, const char *name)
 	fprintf(f, "        display this help text and exit\n");
 	fprintf(f, "    -n, --no-newline\n");
 	fprintf(f, "        do not output a trailing newline\n");
+	fprintf(f, "    -S, --separate-files\n");
+	fprintf(f, "        don't join lines from different files\n");
 	fprintf(f, "    -v, --version\n");
 	fprintf(f, "        display version information and exit\n");
 }
@@ -96,22 +98,25 @@ static void version(FILE *f, const char *name)
 
 int main(int argc, char **argv)
 {
-	int c, delim, newline, status;
+	int c, delim, filebreaks, newline, status;
 	FILE *f;
 
 	static struct option long_opts[] = {
 		{ "delimiter", required_argument, 0, 'd' },
 		{ "help", no_argument, 0, 'h' },
 		{ "no-newline", no_argument, 0, 'n' },
+		{ "separate-files", no_argument, 0, 'S' },
 		{ "version", no_argument, 0, 'v' },
 		{ 0, 0, 0, 0 }
 	};
 
 	delim = ' ';
+	filebreaks = 0;
 	newline = 1;
 	status = EXIT_SUCCESS;
 
-	while ((c = getopt_long(argc, argv, "d:hnv", long_opts, NULL)) != EOF) {
+	while ((c = getopt_long(argc, argv, "d:hnSv", long_opts, NULL))
+	       != EOF) {
 		switch (c) {
 		case 'd':
 			delim = optarg[0];
@@ -121,6 +126,9 @@ int main(int argc, char **argv)
 			exit(0);
 		case 'n':
 			newline = 0;
+			break;
+		case 'S':
+			filebreaks = 1;
 			break;
 		case 'v':
 			version(stdout, PROGRAM_NAME);
@@ -139,6 +147,10 @@ int main(int argc, char **argv)
 			if (!(f = open_file(argv[optind])))
 				continue;
 			unfold(f, delim);
+			if (filebreaks && optind < argc - 1) {
+				putchar('\n');
+				print = 0;
+			}
 		}
 	}
 
