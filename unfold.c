@@ -158,8 +158,10 @@ int main(int argc, char **argv)
 		unfold(STDIN_FILENO, delim);
 	} else {
 		for (; optind < argc; ++optind) {
-			if ((fd = open_file(argv[optind])) == -1)
+			if ((fd = open_file(argv[optind])) == -1) {
+				status = EXIT_FAILURE;
 				continue;
+			}
 			unfold(fd, delim);
 			if (filebreaks && optind < argc - 1) {
 				putchar('\n');
