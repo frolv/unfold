@@ -72,16 +72,16 @@ static int open_file(const char *path)
 	struct stat sb;
 	int fd;
 
-	if (stat(path, &sb) != 0) {
+	if ((fd = open(path, O_RDONLY)) == -1) {
+		perror(path);
+		return -1;
+	}
+	if (fstat(fd, &sb) != 0) {
 		perror(path);
 		return -1;
 	}
 	if (!S_ISREG(sb.st_mode)) {
 		fprintf(stderr, "%s: not a regular file\n", path);
-		return -1;
-	}
-	if ((fd = open(path, O_RDONLY)) == -1) {
-		perror(path);
 		return -1;
 	}
 
@@ -92,7 +92,7 @@ static void help(FILE *f, const char *name)
 {
 	fprintf(f, "usage: %s [OPTION]... [FILE]...\n", name);
 	fprintf(f, "Join input lines and print to standard output\n\n");
-	fprintf(f, "    -d, --delimiter=DELIM\n\n");
+	fprintf(f, "    -d, --delimiter=DELIM\n");
 	fprintf(f, "        use DELIM instead of space to replace newlines\n");
 	fprintf(f, "    -h, --help\n");
 	fprintf(f, "        display this help text and exit\n");
