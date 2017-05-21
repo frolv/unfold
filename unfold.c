@@ -166,6 +166,7 @@ int main(int argc, char **argv)
 				putchar('\n');
 				print_delim = 0;
 			}
+			close(fd);
 		}
 	}
 
