@@ -38,20 +38,19 @@ static void unfold(int fd, int delim)
 	char *s;
 	ssize_t bytes;
 
-	while ((bytes = read(fd, buf, BUFFER_SIZE - 1)) > 0) {
+	while ((bytes = read(fd, buf, BUFFER_SIZE)) > 0) {
 		if (print_delim) {
 			write(STDOUT_FILENO, &delim, 1);
 			print_delim = 0;
 		}
 
-		buf[bytes] = '\0';
 		/*
 		 * Clear the last newline read in case it is the newline at the
 		 * end of the input stream, which shouldn't be replaced with a
 		 * delimiter.
 		 */
 		if (buf[bytes - 1] == '\n') {
-			buf[--bytes] = '\0';
+			--bytes;
 			print_delim = 1;
 		}
 
