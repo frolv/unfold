@@ -158,7 +158,9 @@ int main(int argc, char **argv)
 		unfold(STDIN_FILENO, delim);
 	} else {
 		for (; optind < argc; ++optind) {
-			if ((fd = open_file(argv[optind])) == -1) {
+			if (strcmp(argv[optind], "-") == 0) {
+				fd = STDIN_FILENO;
+			} else if ((fd = open_file(argv[optind])) == -1) {
 				status = EXIT_FAILURE;
 				continue;
 			}
@@ -167,7 +169,8 @@ int main(int argc, char **argv)
 				putchar('\n');
 				print_delim = 0;
 			}
-			close(fd);
+			if (fd != STDIN_FILENO)
+				close(fd);
 		}
 	}
 
