@@ -16,6 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <fcntl.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,48 +29,63 @@
 
 #define BUFFER_SIZE 4096
 
-static int print = 0;
+static int print_delim = 0;
 static int unfolded = 0;
 
-static void unfold(FILE *f, int delim)
+static void unfold(int fd, int delim)
 {
 	char buf[BUFFER_SIZE];
 	char *s;
+	ssize_t bytes;
 
-	unfolded = 1;
-	while (fgets(buf, BUFFER_SIZE, f)) {
-		if (print) {
-			putchar(delim);
-			print = 0;
+	while ((bytes = read(fd, buf, BUFFER_SIZE - 1)) > 0) {
+		if (print_delim) {
+			write(STDOUT_FILENO, &delim, 1);
+			print_delim = 0;
 		}
 
-		if ((s = strchr(buf, '\n'))) {
-			*s = '\0';
-			print = 1;
+		buf[bytes] = '\0';
+		/*
+		 * Clear the last newline read in case it is the newline at the
+		 * end of the input stream, which shouldn't be replaced with a
+		 * delimiter.
+		 */
+		if (buf[bytes - 1] == '\n') {
+			buf[--bytes] = '\0';
+			print_delim = 1;
 		}
-		printf("%s", buf);
+
+		s = buf;
+		while ((s = strchr(s, '\n')))
+			*s = delim;
+
+		write(STDOUT_FILENO, buf, bytes);
 	}
+	if (bytes == -1)
+		perror("read");
+	else
+		unfolded = 1;
 }
 
-static FILE *open_file(const char *path)
+static int open_file(const char *path)
 {
 	struct stat sb;
-	FILE *f;
+	int fd;
 
 	if (stat(path, &sb) != 0) {
 		perror(path);
-		return NULL;
+		return -1;
 	}
 	if (!S_ISREG(sb.st_mode)) {
 		fprintf(stderr, "%s: not a regular file\n", path);
-		return NULL;
+		return -1;
 	}
-	if (!(f = fopen(path, "r"))) {
+	if ((fd = open(path, O_RDONLY)) == -1) {
 		perror(path);
-		return NULL;
+		return -1;
 	}
 
-	return f;
+	return fd;
 }
 
 static void help(FILE *f, const char *name)
@@ -98,8 +114,7 @@ static void version(FILE *f, const char *name)
 
 int main(int argc, char **argv)
 {
-	int c, delim, filebreaks, newline, status;
-	FILE *f;
+	int c, delim, filebreaks, newline, status, fd;
 
 	static struct option long_opts[] = {
 		{ "delimiter", required_argument, 0, 'd' },
@@ -141,15 +156,15 @@ int main(int argc, char **argv)
 	}
 
 	if (optind == argc) {
-		unfold(stdin, delim);
+		unfold(STDIN_FILENO, delim);
 	} else {
 		for (; optind < argc; ++optind) {
-			if (!(f = open_file(argv[optind])))
+			if ((fd = open_file(argv[optind])) == -1)
 				continue;
-			unfold(f, delim);
+			unfold(fd, delim);
 			if (filebreaks && optind < argc - 1) {
 				putchar('\n');
-				print = 0;
+				print_delim = 0;
 			}
 		}
 	}
