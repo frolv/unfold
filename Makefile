@@ -8,7 +8,7 @@ RM := rm -f
 
 MANFILE := $(PROGRAM_NAME).1
 
-.PHONY: all install clean
+.PHONY: all install uninstall clean
 
 all: $(PROGRAM_NAME)
 
