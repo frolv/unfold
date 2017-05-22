@@ -1,0 +1,28 @@
+.TH UNFOLD 1 "May 2017" "unfold v0.2.0" "User Commands"
+.SH NAME
+unfold \- join input lines and print to standard output
+.SH SYNOPSIS
+.B unfold
+[\fIOPTION\fR]... [\fIFILE\fR]...
+.SH DESCRIPTION
+Join input lines in each FILE, writing to standard output.
+.PP
+With no FILE, or when FILE is -, read standard input.
+.SH OPTIONS
+.TP
+.BR \-d ", " \-\-delimiter=\fIDELIM\fR
+use DELIM instead of space to replace newlines
+.TP
+.BR \-h ", " \-\-help
+display help text and exit
+.TP
+.BR \-n ", " \-\-no\-newline
+do not output a trailing newline
+.TP
+.BR \-S ", " \-\-separate\-files
+output a newline between the contents of different files
+.TP
+.BR \-v ", " \-\-version
+display version information and exit
+.SH AUTHOR
+Written by Alexei Frolov.
